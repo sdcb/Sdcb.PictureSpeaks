@@ -1,7 +1,4 @@
 ﻿
-
-using System;
-
 namespace Sdcb.PictureSpeaks.Services.DB;
 
 public class Storage
@@ -20,6 +17,14 @@ public class Storage
         Lobbies.Add(lobby.Id, lobby);
         return lobby;
     }
+
+    internal object ToListPageViewModel() => Lobbies.Values.Select(x => new
+    {
+        x.Id,
+        x.LobbyStatus,
+        x.Creator,
+        x.Idiom,
+    });
 }
 
 public class Lobby
@@ -67,6 +72,18 @@ public class Lobby
         };
         Messages.Add(msg);
         LobbyStatus = LobbyStatus.Error;
+        return msg;
+    }
+
+    internal LobbyMessage AddLobbyText(string user, string guessText)
+    {
+        LobbyMessage msg = new()
+        {
+            Message = guessText, 
+            User = user, 
+            MessageKind = MessageKind.Text
+        };
+        Messages.Add(msg);
         return msg;
     }
 }

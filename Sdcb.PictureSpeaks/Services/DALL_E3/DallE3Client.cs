@@ -18,7 +18,7 @@ public class DallE3Client
         {
             throw new Exception("Config AzureOpenAI:ApiKey is not set.");
         }
-    }
+    } 
 
     public async Task<ImageGeneratedResponse> GenerateDallE3Image(ImageGenerationOptions options)
     {

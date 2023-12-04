@@ -1,4 +1,7 @@
 ﻿@using Sdcb.PictureSpeaks.Services.DB
+@{
+    ViewData["Title"] = "大厅";
+}
 
 <span>用户名：<!-- ko text: userName --><!-- /ko --></span>
 <button data-bind="click: changeName" type="button">修改名字</button>
@@ -12,23 +15,22 @@
 
 <hr />
 <label>房间列表：</label>
+
 <ul>
-    @foreach (var lobby in (Dictionary<int, Lobby>)ViewData["Lobbies"]!)
-    {
-        <li>
-            @lobby.Value.Id
-            由 @lobby.Value.Creator 创建
-            状态：@lobby.Value.LobbyStatus
-            @if (lobby.Value.LobbyStatus == LobbyStatus.Ready)
-            {
-                <a href="/main/lobby/@lobby.Key">点击加入</a>
-            }
-        </li>
-    }
+    <!-- ko foreach: lobbies -->
+    <li>
+        <!-- ko text: id --><!-- /ko --> 由 <!-- ko text: creator --><!-- /ko --> 创建 状态：<!-- ko text: lobbyStatusToString(lobbyStatus()) --><!-- /ko -->
+        <!-- ko if: lobbyStatus() === 1 -->
+        <a data-bind="attr: { href: '/main/lobby/' + id() }">点击加入</a>
+        <!-- /ko -->
+    </li>
+    <!-- /ko -->
 </ul>
 
 @section scripts {
-    <script src="https://knockoutjs.com/downloads/knockout-3.5.1.js"></script>
+    <script src="~/lib/knockout/build/output/knockout-latest.js"></script>
+    <script src="~/lib/knockout/build/output/knockout.mapping-latest.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script>
         const names = [
             "江寒月",
@@ -134,14 +136,24 @@
             "守望相助",
             "顾全大局"
         ];
+        var c = new signalR.HubConnectionBuilder().withUrl("/mainHub").build();
+
         class VM {
             requesting = ko.observable(false);
             src = ko.observable();
             userName = ko.observable(localStorage.getItem("userName") || names[Math.round(Math.random() * names.length)]);
             idiom = ko.observable(idioms[Math.round(Math.random() * idioms.length)]);
+            lobbies = ko.observableArray( @(Json.Serialize(ViewData["Lobbies"])).map(x => ko.mapping.fromJS(x)) );
 
             changeName() {
                 this.userName(prompt("请输入名字"));
+            }
+
+            loadLobbies() {
+                $.get('/main/lobbies').then(data => {
+                    this.lobbies(ko.mapping.fromJS(data));
+                    console.log(data);
+                });
             }
 
             constructor() {
@@ -151,7 +163,13 @@
 
         const vm = new VM();
         vm.requesting(true);
-        
+        c.on('refreshLobby', () => vm.loadLobbies());
+        c.on('onLobbyStatusChange', (id, status) => {
+            console.log(id, status);
+            vm.lobbies().filter(x => x.id() === id)[0].lobbyStatus(status);
+        });
+        c.start();
+
         ko.applyBindings(vm);
     </script>
 }

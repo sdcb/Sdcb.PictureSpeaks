@@ -1,3 +1,4 @@
+using Sdcb.PictureSpeaks.Hubs;
 using Sdcb.PictureSpeaks.Services.DALL_E3;
 using Sdcb.PictureSpeaks.Services.DB;
 
@@ -24,6 +25,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.MapHub<MainHub>("/mainHub");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

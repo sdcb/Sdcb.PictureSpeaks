@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Sdcb.PictureSpeaks.Hubs;
 using Sdcb.PictureSpeaks.Services.DALL_E3;
 using Sdcb.PictureSpeaks.Services.DB;
+using System.Text.RegularExpressions;
 
 namespace Sdcb.PictureSpeaks.Controllers;
 
@@ -22,7 +23,7 @@ public class MainController : Controller
     [Route("")]
     public IActionResult Index()
     {
-        ViewData["Lobbies"] = _db.Lobbies;
+        ViewData["Lobbies"] = _db.ToListPageViewModel();
         return View();
     }
 
@@ -35,15 +36,18 @@ public class MainController : Controller
         {
             try
             {
-                ImageGeneratedResponse resp = await _dalle3.GenerateDallE3Image(new ImageGenerationOptions($"请为成语“{idiom}”生成一张图片"));
+                await Task.Delay(500);
+                ImageGeneratedResponse resp = await _dalle3.GenerateDallE3Image(new ImageGenerationOptions($"请为成语“{idiom}”生成一张符合意境的图片"));
                 LobbyMessage message = lobby.AddImageMessage(resp.Data[0].Url);
                 await _hubContext.Clients.Group($"lobby-{lobby.Id}").OnNewMessage(lobby.Id, message);
+                await _hubContext.Clients.All.OnLobbyStatusChange(lobby.Id, LobbyStatus.Ready);
                 Console.WriteLine($"{user}[{idiom}] --> {resp.Data[0].Url}");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
                 LobbyMessage message = lobby.AddErrorMessage(e.Message);
+                await _hubContext.Clients.All.OnLobbyStatusChange(lobby.Id, LobbyStatus.Error);
                 await _hubContext.Clients.Group($"lobby-{lobby.Id}").OnNewMessage(lobby.Id, message);
             }
         });
@@ -51,10 +55,24 @@ public class MainController : Controller
         return RedirectToAction("Index");
     }
 
+    [HttpGet]
+    public IActionResult Lobbies()
+    {
+        return Json(_db.ToListPageViewModel());
+    }
+
     public IActionResult Lobby(int id)
     {
         ViewData["Lobby"] = _db.Lobbies[id];
         return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UserGuess(string user, int lobbyId, string guessText)
+    {
+        LobbyMessage message = _db.Lobbies[lobbyId].AddLobbyText(user, guessText);
+        await _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(lobbyId, message);
+        return Json(message);
     }
 
     [HttpPost]
