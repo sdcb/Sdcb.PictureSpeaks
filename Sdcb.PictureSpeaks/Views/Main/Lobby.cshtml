@@ -1,0 +1,90 @@
+﻿@using Sdcb.PictureSpeaks.Services.DB
+
+@{
+    Lobby lobby = (Lobby)ViewData["Lobby"]!;
+    Layout = null;
+}
+
+<style>
+    /* 确保 body 是一个 flex 容器，并且内容垂直排列 */
+    body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh; /* 使用视口高度作为 body 的高度 */
+        margin: 0; /* 移除默认的边距 */
+    }
+
+    /* 使 message-list 使用剩余空间，并且可以滚动 */
+    .message-list {
+        flex-grow: 1;
+        overflow-y: auto; /* 启用滚动条 */
+        /* 根据需要添加内边距 */
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        /* 在这里可能需要其他的样式来确保消息显示正确 */
+    }
+
+    /* 保持 guess-area 在底部 */
+    .guess-area {
+        /* 根据需要添加内边距、边框和背景 */
+        padding: 8px;
+        background: #f8f8f8;
+        border-top: 1px solid #ccc;
+    }
+
+    .message-item {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .message-user {
+        margin-right: 8px;
+    }
+
+    /* 小设备上图片宽度为100% */
+    .message-item > img {
+        width: 100%;
+        height: auto; /* 保持图片的原始宽高比 */
+    }
+
+    @@media (min-width: 768px) {
+        .message-item > img {
+            max-width: 400px;
+        }
+    }
+</style>
+
+<body>
+    <div class="status">
+        @lobby.Id 由 @lobby.Creator 创建 状态：@lobby.LobbyStatus
+    </div>
+
+    <hr />
+
+    <div class="message-list">
+        @foreach (LobbyMessage msg in lobby.Messages)
+        {
+            <div class="message-item">
+                <label class="message-user">@msg.User :</label>
+                @if (msg.MessageKind == MessageKind.Image)
+                {
+                    <img src="@msg.Message" />
+                }
+                else if (msg.MessageKind == MessageKind.Text)
+                {
+                    <span>@msg.Message</span>
+                }
+                else if (msg.MessageKind == MessageKind.Error)
+                {
+                    <span style="color: red">@msg.Message</span>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="guess-area">
+        <input type="text" name="guess" />
+        <button>猜</button>
+    </div>
+</body>

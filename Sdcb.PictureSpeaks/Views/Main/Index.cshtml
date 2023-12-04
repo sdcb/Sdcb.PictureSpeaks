@@ -1,0 +1,157 @@
+﻿@using Sdcb.PictureSpeaks.Services.DB
+
+<span>用户名：<!-- ko text: userName --><!-- /ko --></span>
+<button data-bind="click: changeName" type="button">修改名字</button>
+<hr />
+<form method="post" action="/main/createLobby">
+    <label>成语：</label>
+    <input type="hidden" data-bind="value: userName" name="user">
+    <input data-bind="value: idiom" name="idiom">
+    <button type="submit">创建房间</button>
+</form>
+
+<hr />
+<label>房间列表：</label>
+<ul>
+    @foreach (var lobby in (Dictionary<int, Lobby>)ViewData["Lobbies"]!)
+    {
+        <li>
+            @lobby.Value.Id
+            由 @lobby.Value.Creator 创建
+            状态：@lobby.Value.LobbyStatus
+            @if (lobby.Value.LobbyStatus == LobbyStatus.Ready)
+            {
+                <a href="/main/lobby/@lobby.Key">点击加入</a>
+            }
+        </li>
+    }
+</ul>
+
+@section scripts {
+    <script src="https://knockoutjs.com/downloads/knockout-3.5.1.js"></script>
+    <script>
+        const names = [
+            "江寒月",
+            "墨池风",
+            "孤舟影",
+            "云之川",
+            "飞雪凝",
+            "漠北辰",
+            "紫衣霜",
+            "青城遥",
+            "玉碎星",
+            "柳絮飘",
+            "诗骨风",
+            "清风朗",
+            "落花殇",
+            "远山黛",
+            "浅夜吟",
+            "漓江烟",
+            "寒山雁",
+            "风竹静",
+            "萧寒秋",
+            "梦水心",
+            "云起楼",
+            "瀚海沙",
+            "寒灯古",
+            "紫陌尘",
+            "晚烟汀",
+            "琴心语",
+            "碧落歌",
+            "秋千月",
+            "清音遥",
+            "旧时光",
+            "书墨香",
+            "枫叶红",
+            "晓风残",
+            "青石巷",
+            "语梅冬",
+            "箫声远",
+            "莲步轻",
+            "星河醉",
+            "江上吟",
+            "归雁南",
+            "断桥雨",
+            "浅夏绯",
+            "玉芷寒",
+            "烟雨江",
+            "凌霄阁",
+            "闲云野",
+            "霁月清",
+            "风絮语",
+            "花非梦",
+            "漫天絮"
+        ];
+        const idioms = [
+            "四面楚歌",
+            "画龙点睛",
+            "一箭双雕",
+            "杯弓蛇影",
+            "落井下石",
+            "井井有条",
+            "唇亡齿寒",
+            "落花流水",
+            "画蛇添足",
+            "炙手可热",
+            "闭门造车",
+            "人浮于事",
+            "螳螂捕蝉",
+            "路遥知马力",
+            "调虎离山",
+            "自相矛盾",
+            "杀鸡取卵",
+            "牛刀小试",
+            "拔苗助长",
+            "对牛弹琴",
+            "随波逐流",
+            "画蛇添足",
+            "老骥伏枥",
+            "沉鱼落雁",
+            "心如明镜",
+            "画地为牢",
+            "亡羊补牢",
+            "青梅竹马",
+            "浑水摸鱼",
+            "闭门思过",
+            "远水解不了近渴",
+            "掩耳盗铃",
+            "雨过天晴",
+            "笨鸟先飞",
+            "杞人忧天",
+            "九牛一毛",
+            "山水相逢",
+            "青出于蓝",
+            "沉默寡言",
+            "拍案叫绝",
+            "守株待兔",
+            "看破红尘",
+            "至死不渝",
+            "深藏不露",
+            "温文尔雅",
+            "点石成金",
+            "高山流水",
+            "望洋兴叹",
+            "守望相助",
+            "顾全大局"
+        ];
+        class VM {
+            requesting = ko.observable(false);
+            src = ko.observable();
+            userName = ko.observable(localStorage.getItem("userName") || names[Math.round(Math.random() * names.length)]);
+            idiom = ko.observable(idioms[Math.round(Math.random() * idioms.length)]);
+
+            changeName() {
+                this.userName(prompt("请输入名字"));
+            }
+
+            constructor() {
+                this.userName.subscribe(n => localStorage.setItem("userName", n));
+            }
+        }
+
+        const vm = new VM();
+        vm.requesting(true);
+        
+        ko.applyBindings(vm);
+    </script>
+}
