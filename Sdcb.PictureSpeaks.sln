@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34316.72
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sdcb.PictureSpeaks", "Sdcb.PictureSpeaks\Sdcb.PictureSpeaks.csproj", "{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {77D47919-B777-466D-9F8B-EF1348D152D0}
+	EndGlobalSection
+EndGlobal
