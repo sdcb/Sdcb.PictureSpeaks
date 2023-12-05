@@ -34,7 +34,7 @@ public record ImageGenerationOptions
     public string? ResponseFormat { get; init; }
 
     ///<summary>
-    /// Gets or sets the size of the generated images.
+    /// Gets or sets the size of the generated images, supported: 1024x1024, 1792x1024, 1024x1792
     ///</summary>
     public string Size { get; init; } = "1024x1024";
 

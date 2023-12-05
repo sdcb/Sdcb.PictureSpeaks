@@ -1,100 +1,96 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+using Sdcb.PictureSpeaks.Hubs;
+
 namespace Sdcb.PictureSpeaks.Services.DB;
 
-public class Storage
+public class Storage(DbContextOptions<Storage> options) : DbContext(options)
 {
-    public Dictionary<int, Lobby> Lobbies { get; init; } = new();
+    public DbSet<Lobby> Lobby { get; init; } = null!;
+    public DbSet<LobbyMessage> LobbyMessage { get; init; } = null!;
+    public DbSet<LobbyHistoryMessage> LobbyHistoryMessage { get; init; } = null!;
+    public DbSet<Dalle3Request> Dalle3Request { get; init; } = null!;
+}
 
-    public Lobby Add(string user, string idiom)
-    {
-        Lobby lobby = new()
-        {
-            Idiom = idiom,
-            Creator = user,
-            LobbyStatus = LobbyStatus.Pending,
-            Users = new List<string>() { user },
-        };
-        Lobbies.Add(lobby.Id, lobby);
-        return lobby;
-    }
+public class Dalle3Request
+{
+    public int Id { get; set; }
 
-    internal object ToListPageViewModel() => Lobbies.Values.Select(x => new
-    {
-        x.Id,
-        x.LobbyStatus,
-        x.Creator,
-        x.Idiom,
-    });
+    public int LobbyId { get; set; }
+
+    public Lobby Lobby { get; set; } = null!;
+
+    public string AzureImageUrl { get; set; } = null!;
+
+    public string RevisedPrompt { get; set; } = null!;
+
+    public DateTime AzureGeneratedTime { get; set; }
+
+    public string? LocalPath { get; set; }
+
+    public DateTime? LocalDownloadedTime { get; set; }
 }
 
 public class Lobby
 {
-    static IEnumerator<int> IdGenerator = Enumerable.Range(1, int.MaxValue).GetEnumerator();
-
-    public Lobby()
-    {
-        IdGenerator.MoveNext();
-        Id = IdGenerator.Current;
-    }
-
-    public int Id { get; }
+    public int Id { get; set; }
 
     public LobbyStatus LobbyStatus { get; set; }
 
-    public string Creator { get; init; } = null!;
+    public string CreateUser { get; init; } = null!;
 
     public string Idiom { get; init; } = null!;
 
-    public List<string> Users { get; init; } = new();
+    public DateTime CreateTime { get; init; } = DateTime.Now;
 
-    public List<LobbyMessage> Messages { get; init; } = new();
+    public virtual ICollection<Dalle3Request> Dalle3Requests { get; init; } = [];
 
-    public LobbyMessage AddImageMessage(string url)
-    {
-        LobbyMessage msg = new()
-        {
-            Message = url,
-            User = "系统",
-            MessageKind = MessageKind.Image
-        };
-        Messages.Add(msg);
-        LobbyStatus = LobbyStatus.Ready;
-        return msg;
-    }
+    public virtual ICollection<LobbyMessage> Messages { get; init; } = [];
 
-    public LobbyMessage AddErrorMessage(string message)
-    {
-        LobbyMessage msg = new()
-        {
-            Message = message,
-            User = "系统",
-            MessageKind = MessageKind.Error
-        };
-        Messages.Add(msg);
-        LobbyStatus = LobbyStatus.Error;
-        return msg;
-    }
-
-    internal LobbyMessage AddLobbyText(string user, string guessText)
-    {
-        LobbyMessage msg = new()
-        {
-            Message = guessText, 
-            User = user, 
-            MessageKind = MessageKind.Text
-        };
-        Messages.Add(msg);
-        return msg;
-    }
+    public virtual ICollection<LobbyHistoryMessage> HistoryMessages { get; init; } = [];
 }
 
-public class LobbyMessage
+public record LobbyHistoryMessage 
 {
+    public int Id { get; set; }
+    public int OldMessageId { get; set; }
+    public int LobbyId { get; set; }
+    public Lobby Lobby { get; set; } = null!;
     public string User { get; init; } = null!;
-
-    public string Message { get; init; } = null!;
-
+    public string Message { get; set; } = null!;
+    public DateTime DateTime { get; init; } = DateTime.Now;
     public MessageKind MessageKind { get; init; } = MessageKind.Text;
+}
+
+public record LobbyMessage
+{
+    public int Id { get; set; }
+    public int LobbyId { get; set; }
+    public Lobby Lobby { get; set; } = null!;
+    public string User { get; init; } = null!;
+    public string Message { get; set; } = null!;
+    public DateTime DateTime { get; init; } = DateTime.Now;
+    public MessageKind MessageKind { get; init; } = MessageKind.Text;
+
+    public MessageViewModel ToViewModel() => new()
+    {
+        Id = Id,
+        User = User,
+        Message = Message,
+        DateTime = DateTime,
+        MessageKind = MessageKind,
+    };
+
+    public LobbyHistoryMessage ToHistoryMessage() => new()
+    {
+        OldMessageId = Id,
+        LobbyId = LobbyId,
+        Lobby = Lobby,
+        User = User,
+        Message = Message,
+        DateTime = DateTime,
+        MessageKind = MessageKind,
+    };
 }
 
 public enum MessageKind
@@ -106,5 +102,6 @@ public enum LobbyStatus
 {
     Pending,
     Ready,
-    Error, 
+    Error,
+    Completed,
 }

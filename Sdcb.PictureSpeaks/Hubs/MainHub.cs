@@ -15,6 +15,18 @@ public interface IMainHubClient
 {
     public Task RefreshLobby();
 
-    public Task OnNewMessage(int lobbyId, LobbyMessage message);
-    public Task OnLobbyStatusChange(int lobbyId, LobbyStatus status);
+    public Task OnNewMessage(MessageViewModel message);
+
+    public Task OnMessageStreaming(int messageId, string content);
+
+    public Task OnLobbyStatusChanged(int lobbyId, LobbyStatus status);
+}
+
+public class MessageViewModel
+{
+    public int Id { get; set; }
+    public string User { get; init; } = null!;
+    public string Message { get; set; } = null!;
+    public DateTime DateTime { get; init; } = DateTime.Now;
+    public MessageKind MessageKind { get; init; } = MessageKind.Text;
 }

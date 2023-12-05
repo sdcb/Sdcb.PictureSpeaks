@@ -6,7 +6,7 @@
 }
 <html lang="zh-cn">
 <head>
-    <title>@lobby.Id - @lobby.Creator</title>
+    <title>@lobby.Id - @lobby.CreateUser</title>
     <style>
         /* 确保 body 是一个 flex 容器，并且内容垂直排列 */
         body {
@@ -33,7 +33,22 @@
             padding: 8px;
             background: #f8f8f8;
             border-top: 1px solid #ccc;
+            display: flex; /* 使用flex布局，方便子元素对齐 */
         }
+
+            /* 调整文本输入框的样式 */
+            .guess-area input[type="text"] {
+                flex-grow: 1; /* 输入框会占据剩余的空间 */
+                margin-right: 8px; /* 和按钮之间的间隔 */
+                padding: 10px; /* 增加内边距，使得输入框看起来更大 */
+            }
+
+            /* 调整按钮样式 */
+            .guess-area button {
+                padding: 10px 20px; /* 增加按钮的内边距，使得按钮看起来更大 */
+                font-size: 16px; /* 增加按钮字体大小 */
+                cursor: pointer; /* 鼠标悬停在按钮时显示小手指示符 */
+            }
 
         .message-item {
             display: flex;
@@ -52,7 +67,7 @@
 
         @@media (min-width: 768px) {
             .message-item > img {
-                max-width: 400px;
+                max-width: 768px;
             }
         }
     </style>
@@ -60,7 +75,7 @@
 
 <body>
     <div class="status">
-        @lobby.Id 由 @lobby.Creator 创建 状态：@lobby.LobbyStatus
+        @lobby.Id 由 @lobby.CreateUser 创建 状态：<!-- ko text: lobbyStatusToString(lobbyStatus()) --><!-- /ko -->
     </div>
 
     <hr />
@@ -69,38 +84,89 @@
         <div class="message-item">
             <label class="message-user" data-bind="text: user() + ' : '"></label>
             <!-- ko if: messageKind() === 0 -->
-            <span data-bind="text: message()"></span>
+
+            <!-- ko if: user() === 'AI' -->
+            <span data-bind="text: message" style="color: blue"></span>
+            <!-- /ko -->
+            <!-- ko if: user() !== 'AI' -->
+            <span data-bind="text: message"></span>
+            <!-- /ko -->
+            
             <!-- /ko -->
             <!-- ko if: messageKind() === 1 -->
-            <img data-bind="attr: {src: message()}" />
+            <img data-bind="attr: {src: '/image/' + message()}" />
             <!-- /ko -->
             <!-- ko if: messageKind() === 2 -->
-            <span style="color: red" data-bind="text: message()"></span>
+            <span style="color: red" data-bind="text: message"></span>
             <!-- /ko -->
         </div>
     </div>
 
+    <!-- ko if: lobbyStatus() === 1 -->
+    <form data-bind="submit: guess" class="guess-area">
+        <input type="text" name="guess" data-bind="value: guessText" />
+        <button>猜</button>
+    </form>
+    <!-- /ko -->
+
+    <!-- ko ifnot: lobbyStatus() === 1 -->
     <div class="guess-area">
-        <form data-bind="submit: guess">
-            <input type="text" name="guess" data-bind="value: guessText" />
-            <button>猜</button>
-        </form>
+        <button type="button" data-bind="click: replay">重玩</button>
     </div>
+    <!-- /ko -->
 
     <script src="~/lib/knockout/build/output/knockout-latest.js"></script>
     <script src="~/lib/knockout/build/output/knockout.mapping-latest.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/js/site.js"></script>
     <script>
         class VM {
             guessText = ko.observable('');
-            messages = ko.observableArray( @(Json.Serialize(lobby.Messages)).map(x => ko.mapping.fromJS(x)) );
+            lobbyStatus = ko.observable(@((int)lobby.LobbyStatus));
+            messages = ko.observableArray(@(Json.Serialize(lobby.Messages.Select(x => x.ToViewModel()))).map(x => ko.mapping.fromJS(x)));
 
             guess() {
-                $.post('/main/userGuess')
-                console.log(this.guessText());
+                $.post('/main/userGuess', {
+                    user: localStorage.getItem("userName"),
+                    lobbyId: @lobby.Id,
+                    guessText: this.guessText()
+                }).then(() => {
+                    this.guessText('');
+                });
+            }
+
+            replay() {
+                $.post('/main/replay', {
+                    user: localStorage.getItem("userName"),
+                    lobbyId: @lobby.Id
+                }).then(() => {
+                    this.guessText('');
+                });
             }
         }
 
         const vm = new VM();
+        const c = new signalR.HubConnectionBuilder().withUrl("/mainHub").build();
+        c.on('onNewMessage', (msg) => {
+            vm.messages.push(ko.mapping.fromJS(msg));
+        });
+        c.on('onMessageStreaming', (messageId, content) => {
+            const msg = vm.messages().filter(x => x.id() === messageId)[0];
+            msg.message(content);
+        });
+        c.on('onLobbyStatusChanged', (id, status) => {
+            if (id !== @lobby.Id) return;
+
+            vm.lobbyStatus(status);
+            if (status === 1) {
+                // replay
+                location.reload();
+            }
+        });
+        c.start().then(async () => {
+            await c.invoke('joinLobby', @lobby.Id);
+        });
         ko.applyBindings(vm);
     </script>
 </body>

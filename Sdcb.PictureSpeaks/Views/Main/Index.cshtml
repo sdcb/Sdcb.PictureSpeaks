@@ -19,9 +19,9 @@
 <ul>
     <!-- ko foreach: lobbies -->
     <li>
-        <!-- ko text: id --><!-- /ko --> 由 <!-- ko text: creator --><!-- /ko --> 创建 状态：<!-- ko text: lobbyStatusToString(lobbyStatus()) --><!-- /ko -->
+        <!-- ko text: id --><!-- /ko --> 由 <!-- ko text: createUser --><!-- /ko --> 创建 状态：<!-- ko text: lobbyStatusToString(lobbyStatus()) --><!-- /ko -->
         <!-- ko if: lobbyStatus() === 1 -->
-        <a data-bind="attr: { href: '/main/lobby/' + id() }">点击加入</a>
+        <a data-bind="attr: { href: '/main/lobby/' + id(), click: $parent.setUserName }">点击加入</a>
         <!-- /ko -->
     </li>
     <!-- /ko -->
@@ -154,6 +154,10 @@
                     this.lobbies(ko.mapping.fromJS(data));
                     console.log(data);
                 });
+            }
+
+            setUserName() {
+                localStorage.setItem('userName', this.userName());
             }
 
             constructor() {

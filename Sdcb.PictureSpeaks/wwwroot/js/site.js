@@ -6,4 +6,5 @@ function lobbyStatusToString(lobbyState) {
     if (lobbyState === 0) return "等待中……";
     if (lobbyState === 1) return "就绪";
     if (lobbyState === 2) return "错误";
+    if (lobbyState === 3) return "已完成";
 }
