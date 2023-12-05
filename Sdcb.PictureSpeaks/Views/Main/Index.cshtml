@@ -21,7 +21,7 @@
     <li>
         <!-- ko text: id --><!-- /ko --> 由 <!-- ko text: createUser --><!-- /ko --> 创建 状态：<!-- ko text: lobbyStatusToString(lobbyStatus()) --><!-- /ko -->
         <!-- ko if: lobbyStatus() === 1 -->
-        <a data-bind="attr: { href: '/main/lobby/' + id(), click: $parent.setUserName }">点击加入</a>
+        <a data-bind="click: function() { $parent.redirect('/main/lobby/' + id()); }" href="javascript:void(0)">点击加入</a>
         <!-- /ko -->
     </li>
     <!-- /ko -->
@@ -156,8 +156,9 @@
                 });
             }
 
-            setUserName() {
+            redirect(url) {
                 localStorage.setItem('userName', this.userName());
+                location.href = url;
             }
 
             constructor() {
@@ -168,7 +169,7 @@
         const vm = new VM();
         vm.requesting(true);
         c.on('refreshLobby', () => vm.loadLobbies());
-        c.on('onLobbyStatusChange', (id, status) => {
+        c.on('onLobbyStatusChanged', (id, status) => {
             console.log(id, status);
             vm.lobbies().filter(x => x.id() === id)[0].lobbyStatus(status);
         });
