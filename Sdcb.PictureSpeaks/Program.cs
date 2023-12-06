@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Sdcb.PictureSpeaks.Hubs;
-using Sdcb.PictureSpeaks.Services.DALL_E3;
+using Sdcb.PictureSpeaks.Services.OpenAI;
 using Sdcb.PictureSpeaks.Services.DB;
+using Sdcb.PictureSpeaks.Services.Idioms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,9 @@ builder.Services.AddSingleton<DallE3Client>();
 builder.Services.AddSignalR();
 builder.Services.AddDbContext<Storage>(options => options.UseSqlite("Data Source=storage.db"));
 builder.Services.AddTransient<LobbyRepository>();
+builder.Services.AddSingleton<IdiomService>();
+builder.Services.AddSingleton<OpenAIConfig>();
+builder.Services.AddSingleton<ChatGPTService>();
 
 builder.Services.AddMvc().AddRazorRuntimeCompilation();
 

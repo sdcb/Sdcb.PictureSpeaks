@@ -43,6 +43,12 @@ public class Lobby
 
     public DateTime CreateTime { get; init; } = DateTime.Now;
 
+    public LobbyStatus RealStatus => LobbyStatus switch
+    {
+        LobbyStatus.Pending => DateTime.Now - CreateTime > TimeSpan.FromSeconds(120) ? LobbyStatus.Error : LobbyStatus.Pending,
+        var x => x,
+    };
+
     public virtual ICollection<Dalle3Request> Dalle3Requests { get; init; } = [];
 
     public virtual ICollection<LobbyMessage> Messages { get; init; } = [];

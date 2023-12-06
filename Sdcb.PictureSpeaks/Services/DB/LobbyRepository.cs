@@ -1,6 +1,6 @@
 ﻿using Azure.Core.Pipeline;
 using Microsoft.EntityFrameworkCore;
-using Sdcb.PictureSpeaks.Services.DALL_E3;
+using Sdcb.PictureSpeaks.Services.OpenAI;
 
 namespace Sdcb.PictureSpeaks.Services.DB;
 
@@ -22,13 +22,16 @@ public class LobbyRepository(Storage db, IServiceScopeFactory scope)
         return lobby;
     }
 
-    internal async Task<object[]> ToListPageViewModel() => await _db.Lobby.Select(x => new
-    {
-        x.Id,
-        x.LobbyStatus,
-        x.CreateUser,
-        x.Idiom,
-    }).ToArrayAsync();
+    internal async Task<object[]> ToListPageViewModel() => await _db.Lobby
+        .OrderByDescending(x => x.Id)
+        .Take(20)
+        .Select(x => new
+        {
+            x.Id,
+            LobbyStatus = x.RealStatus,
+            x.CreateUser,
+            x.Idiom,
+        }).ToArrayAsync();
 
     public async Task<LobbyMessage> AddImageMessage(int lobbyId, Datum datum)
     {
@@ -78,7 +81,7 @@ public class LobbyRepository(Storage db, IServiceScopeFactory scope)
         await db.SaveChangesAsync();
     }
 
-    public async Task<LobbyMessage> AddErrorMessage(int lobbyId, string message)
+    public async Task<LobbyMessage> AddErrorMessage(int lobbyId, string message, bool markError)
     {
         Lobby? lobby = await _db.Lobby.FindAsync(lobbyId) ?? throw new Exception("找不到房间");
         LobbyMessage msg = new()
@@ -88,7 +91,10 @@ public class LobbyRepository(Storage db, IServiceScopeFactory scope)
             MessageKind = MessageKind.Error,
         };
         lobby.Messages.Add(msg);
-        lobby.LobbyStatus = LobbyStatus.Error;
+        if (markError)
+        {
+            lobby.LobbyStatus = LobbyStatus.Error;
+        }
         await _db.SaveChangesAsync();
         return msg;
     }

@@ -7,6 +7,7 @@
 <html lang="zh-cn">
 <head>
     <title>@lobby.Id - @lobby.CreateUser</title>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <style>
         /* 确保 body 是一个 flex 容器，并且内容垂直排列 */
         body {
@@ -75,23 +76,24 @@
 
 <body>
     <div class="status">
-        @lobby.Id 由 @lobby.CreateUser 创建 状态：<!-- ko text: lobbyStatusToString(lobbyStatus()) --><!-- /ko -->
+        <a href="/">&lt;返回首页</a>
+        @lobby.Id 由 @lobby.CreateUser 创建 |
+        状态：<span data-bind="lobbyStatus: lobbyStatus"></span> |
+        当前用户名：<span data-bind="text: userName"></span> <button type="button" data-bind="changeName">修改</button>
     </div>
 
     <hr />
-
+    <!-- ko if: messages().length > 0 -->
     <div class="message-list" data-bind="foreach: messages">
         <div class="message-item">
             <label class="message-user" data-bind="text: user() + ' : '"></label>
             <!-- ko if: messageKind() === 0 -->
-
             <!-- ko if: user() === 'AI' -->
             <span data-bind="text: message" style="color: blue"></span>
             <!-- /ko -->
             <!-- ko if: user() !== 'AI' -->
             <span data-bind="text: message"></span>
             <!-- /ko -->
-            
             <!-- /ko -->
             <!-- ko if: messageKind() === 1 -->
             <img data-bind="attr: {src: '/image/' + message()}" />
@@ -101,17 +103,33 @@
             <!-- /ko -->
         </div>
     </div>
+    <!-- /ko -->
+    <div data-bind="if: messages().length === 0">
+        <img src="/assets/loading.webp" alt="图片生成中，大约需要20秒，请稍候..." style="width: 100%"/>
+        图片生成中，大约需要20秒，请稍候...
+    </div>
 
     <!-- ko if: lobbyStatus() === 1 -->
     <form data-bind="submit: guess" class="guess-area">
-        <input type="text" name="guess" data-bind="value: guessText" />
+        <input type="text" name="guess" required data-bind="value: guessText" />
         <button>猜</button>
     </form>
     <!-- /ko -->
-
-    <!-- ko ifnot: lobbyStatus() === 1 -->
+    <!-- ko if: lobbyStatus() === 3 -->
     <div class="guess-area">
-        <button type="button" data-bind="click: replay">重玩</button>
+        <form method="post" style="display: inline-block" data-bind="submit: replay">
+            <button>重置游戏</button>
+        </form>
+        &nbsp;
+        <form method="post" action="/main/createRandomLobby" style="display: inline-block">
+            <input type="hidden" data-bind="value: userName" name="user">
+            <button type="submit">再玩一局新的，使用随机成语</button>
+        </form>
+    </div>
+    <!-- /ko -->
+    <!-- ko if: lobbyStatus() === 2 -->
+    <div class="guess-area">
+        <button type="button" data-bind="click: regenerate">重新生成</button>
     </div>
     <!-- /ko -->
 
@@ -123,12 +141,17 @@
     <script>
         class VM {
             guessText = ko.observable('');
-            lobbyStatus = ko.observable(@((int)lobby.LobbyStatus));
+            lobbyStatus = ko.observable(@((int)lobby.RealStatus));
             messages = ko.observableArray(@(Json.Serialize(lobby.Messages.Select(x => x.ToViewModel()))).map(x => ko.mapping.fromJS(x)));
+            userName = ko.observable(localStorage.getItem("userName") || randomName());
+
+            changeName() {
+                this.userName(prompt("请输入新名字："));
+            }
 
             guess() {
                 $.post('/main/userGuess', {
-                    user: localStorage.getItem("userName"),
+                    user: this.userName(),
                     lobbyId: @lobby.Id,
                     guessText: this.guessText()
                 }).then(() => {
@@ -138,11 +161,20 @@
 
             replay() {
                 $.post('/main/replay', {
-                    user: localStorage.getItem("userName"),
+                    user: this.userName(),
                     lobbyId: @lobby.Id
-                }).then(() => {
-                    this.guessText('');
-                });
+                                }).then(() => {
+                        this.guessText('');
+                    });
+            }
+
+            regenerate() {
+                $.post('/main/regenerate', {
+                    user: this.userName(),
+                    lobbyId: @lobby.Id
+                                        }).then(() => {
+                        this.guessText('');
+                    });
             }
         }
 
