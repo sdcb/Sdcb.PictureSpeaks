@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /Sdcb.PictureSpeaks/storage.db-shm
 /Sdcb.PictureSpeaks/storage.db-wal
 /Sdcb.PictureSpeaks/wwwroot/images
+/scripts/temp
