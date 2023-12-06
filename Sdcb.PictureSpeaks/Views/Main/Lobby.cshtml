@@ -7,48 +7,42 @@
 <html lang="zh-cn">
 <head>
     <title>@lobby.Id - @lobby.CreateUser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <style>
-        /* 确保 body 是一个 flex 容器，并且内容垂直排列 */
         body {
             display: flex;
             flex-direction: column;
-            height: 100vh; /* 使用视口高度作为 body 的高度 */
-            margin: 0; /* 移除默认的边距 */
+            height: 100vh;
+            margin: 0;
+            font-size: 16px; /* 增加基础字体大小 */
         }
 
-        /* 使 message-list 使用剩余空间，并且可以滚动 */
         .message-list {
             flex-grow: 1;
-            overflow-y: auto; /* 启用滚动条 */
-            /* 根据需要添加内边距 */
+            overflow-y: auto;
             padding: 8px;
             display: flex;
             flex-direction: column;
-            /* 在这里可能需要其他的样式来确保消息显示正确 */
         }
 
-        /* 保持 guess-area 在底部 */
         .guess-area {
-            /* 根据需要添加内边距、边框和背景 */
             padding: 8px;
             background: #f8f8f8;
             border-top: 1px solid #ccc;
-            display: flex; /* 使用flex布局，方便子元素对齐 */
+            display: flex;
         }
 
-            /* 调整文本输入框的样式 */
             .guess-area input[type="text"] {
-                flex-grow: 1; /* 输入框会占据剩余的空间 */
-                margin-right: 8px; /* 和按钮之间的间隔 */
-                padding: 10px; /* 增加内边距，使得输入框看起来更大 */
+                flex-grow: 1;
+                margin-right: 8px;
+                padding: 12px; /* 为移动端更大的触摸区域增加内边距 */
             }
 
-            /* 调整按钮样式 */
             .guess-area button {
-                padding: 10px 20px; /* 增加按钮的内边距，使得按钮看起来更大 */
-                font-size: 16px; /* 增加按钮字体大小 */
-                cursor: pointer; /* 鼠标悬停在按钮时显示小手指示符 */
+                padding: 12px 24px; /* 为移动端更大的触摸区域增加内边距 */
+                font-size: 18px; /* 增加按钮的字体大小 */
+                cursor: pointer;
             }
 
         .message-item {
@@ -60,15 +54,24 @@
             margin-right: 8px;
         }
 
-        /* 小设备上图片宽度为100% */
         .message-item > img {
             width: 100%;
-            height: auto; /* 保持图片的原始宽高比 */
+            height: auto;
         }
 
         @@media (min-width: 768px) {
+            /* 当屏幕尺寸大于或等于768px时的样式 */
             .message-item > img {
                 max-width: 768px;
+            }
+
+            .guess-area input[type="text"], .guess-area button {
+                padding: 10px; /* 重置为原本的内边距 */
+                font-size: 16px; /* 重置为原本的字体大小 */
+            }
+
+            body {
+                font-size: 14px; /* 重置为原本的字体大小 */
             }
         }
     </style>
