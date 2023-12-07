@@ -57,6 +57,7 @@
 
             changeName() {
                 this.userName(prompt("请输入新名字："));
+                localStorage.setItem("userName", this.userName());
             }
 
             loadLobbies() {

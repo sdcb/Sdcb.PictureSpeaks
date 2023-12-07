@@ -8,6 +8,7 @@ public class IdiomService
 {
     private Dictionary<string, Idiom> _idioms = null!;
     private string[] _idiomKeys = null!;
+    private string[] _idiomCommonKeys = null!;
     private readonly ChatGPTService _llm;
 
     public IdiomService(ChatGPTService llm)
@@ -18,14 +19,14 @@ public class IdiomService
 
     private void EnsureLoaded()
     {
-        using FileStream fs = File.OpenRead("Data/idiom.json");
-        _idioms = JsonSerializer.Deserialize<Idiom[]>(fs)!.ToDictionary(k => k.Word, v => v);
+        _idioms = JsonSerializer.Deserialize<Idiom[]>(File.ReadAllBytes("Data/idiom.json"))!.ToDictionary(k => k.Word, v => v);
         _idiomKeys = [.. _idioms.Keys];
+        _idiomCommonKeys = File.ReadAllLines("Data/common.txt");
     }
 
     public Idiom GetRandomIdiom()
     {
-        return _idioms[_idiomKeys[Random.Shared.Next(0, _idiomKeys.Length)]];
+        return _idioms[_idiomCommonKeys[Random.Shared.Next(0, _idiomCommonKeys.Length)]];
     }
 
     public bool TryGetIdiom(string word, [NotNullWhen(returnValue: true)] out Idiom? idiom)
@@ -40,8 +41,10 @@ public class IdiomService
 
     public async Task<WordIsIdiomResult> IsIdiomOnline(string word)
     {
+        if (word.Length > 20) return false;
+
         // check whether the word is all chinese characters
-        if (!word.All(c => c >= 0x4e00 && c <= 0x9fff))
+        if (!word.All(c => c >= 0x4e00 && c <= 0x9fff || c == ',' || c == '，'))
         {
             return false;
         }

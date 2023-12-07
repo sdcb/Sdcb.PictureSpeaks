@@ -9,46 +9,39 @@
     <title>@lobby.Id - @lobby.CreateUser</title>
     <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <style>
-        /* 确保 body 是一个 flex 容器，并且内容垂直排列 */
         body {
             display: flex;
             flex-direction: column;
-            height: 100vh; /* 使用视口高度作为 body 的高度 */
-            margin: 0; /* 移除默认的边距 */
+            height: 100vh;
+            margin: 0;
         }
 
-        /* 使 message-list 使用剩余空间，并且可以滚动 */
         .message-list {
             flex-grow: 1;
-            overflow-y: auto; /* 启用滚动条 */
-            /* 根据需要添加内边距 */
+            overflow-y: auto;
             padding: 8px;
             display: flex;
             flex-direction: column;
-            /* 在这里可能需要其他的样式来确保消息显示正确 */
         }
 
-        /* 保持 guess-area 在底部 */
         .guess-area {
-            /* 根据需要添加内边距、边框和背景 */
             padding: 8px;
             background: #f8f8f8;
             border-top: 1px solid #ccc;
-            display: flex; /* 使用flex布局，方便子元素对齐 */
+            display: flex;
         }
 
-            /* 调整文本输入框的样式 */
             .guess-area input[type="text"] {
-                flex-grow: 1; /* 输入框会占据剩余的空间 */
-                margin-right: 8px; /* 和按钮之间的间隔 */
-                padding: 10px; /* 增加内边距，使得输入框看起来更大 */
+                flex-grow: 1;
+                margin-right: 8px;
+                padding: 10px;
             }
 
             /* 调整按钮样式 */
             .guess-area button {
-                padding: 10px 20px; /* 增加按钮的内边距，使得按钮看起来更大 */
-                font-size: 16px; /* 增加按钮字体大小 */
-                cursor: pointer; /* 鼠标悬停在按钮时显示小手指示符 */
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
             }
 
         .message-item {
@@ -60,10 +53,9 @@
             margin-right: 8px;
         }
 
-        /* 小设备上图片宽度为100% */
         .message-item > img {
-            width: 100%;
-            height: auto; /* 保持图片的原始宽高比 */
+            width: calc(100% - 8px - 24px);
+            height: auto;
         }
 
         @@media (min-width: 768px) {
@@ -79,7 +71,7 @@
         <a href="/">&lt;返回首页</a>
         @lobby.Id 由 @lobby.CreateUser 创建 |
         状态：<span data-bind="lobbyStatus: lobbyStatus"></span> |
-        当前用户名：<span data-bind="text: userName"></span> <button type="button" data-bind="changeName">修改</button>
+        当前用户名：<span data-bind="text: userName"></span> <button type="button" data-bind="click: changeName">修改</button>
     </div>
 
     <hr />
@@ -146,7 +138,8 @@
             userName = ko.observable(localStorage.getItem("userName") || randomName());
 
             changeName() {
-                this.userName(prompt("请输入新名字："));
+                this.userName(prompt("请输入新名字：") || this.userName());
+                localStorage.setItem("userName", this.userName());
             }
 
             guess() {
