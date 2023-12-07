@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,10 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>4ffc625a-c845-4a7f-bbfb-1f6e9fd910d5</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Data\common.txt" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Data\common.txt">
@@ -24,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\ChatGPT\" />
+    <None Include="wwwroot\images\*" />
   </ItemGroup>
 
 </Project>
