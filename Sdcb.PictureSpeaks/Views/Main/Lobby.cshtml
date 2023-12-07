@@ -7,6 +7,7 @@
 <html lang="zh-cn">
 <head>
     <title>@lobby.Id - @lobby.CreateUser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <style>
         body {
@@ -14,6 +15,7 @@
             flex-direction: column;
             height: 100vh;
             margin: 0;
+            font-size: 16px; /* 增加基础字体大小 */
         }
 
         .message-list {
@@ -34,13 +36,12 @@
             .guess-area input[type="text"] {
                 flex-grow: 1;
                 margin-right: 8px;
-                padding: 10px;
+                padding: 12px; /* 为移动端更大的触摸区域增加内边距 */
             }
 
-            /* 调整按钮样式 */
             .guess-area button {
-                padding: 10px 20px;
-                font-size: 16px;
+                padding: 12px 24px; /* 为移动端更大的触摸区域增加内边距 */
+                font-size: 18px; /* 增加按钮的字体大小 */
                 cursor: pointer;
             }
 
@@ -59,8 +60,18 @@
         }
 
         @@media (min-width: 768px) {
+            /* 当屏幕尺寸大于或等于768px时的样式 */
             .message-item > img {
                 max-width: 768px;
+            }
+
+            .guess-area input[type="text"], .guess-area button {
+                padding: 10px; /* 重置为原本的内边距 */
+                font-size: 16px; /* 重置为原本的字体大小 */
+            }
+
+            body {
+                font-size: 14px; /* 重置为原本的字体大小 */
             }
         }
     </style>
