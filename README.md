@@ -5,6 +5,8 @@ Sdcb.PictureSpeaks 是一个基于`.NET 8`构建的`ASP.NET MVC`项目，集成�
 ## 功能特色
 
 - **AI聊天与辅助**：集成Azure OpenAI的ChatGPT技术，包括最新的ChatGPT-4和ChatGPT-3.5，使聊天体验更加智能化。
+  * 你可以向AI请求更多提示，比如说“这个图上我看不太出来，你能提供一些相关的提示吗？“
+  * 你可以申请向AI生成一张新图片，比如说“这个图有点太难了，能生成一张新图片吗？”
 - **多人实时聊天**：基于SignalR的实时流式聊天功能，让沟通变得更加即时和高效。
 - **MVVM前端设计**：使用knockout.js实现前端的MVVM设计模式，简化数据与UI间的互动（当然这是老技术）。
 - **数据持久化**：利用最新版的Entity Framework Core 8.0与SQLite实现稳定的数据存储和访问。
