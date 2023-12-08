@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sdcb.PictureSpeaks", "Sdcb.PictureSpeaks\Sdcb.PictureSpeaks.csproj", "{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sdcb.PictureSpeaks", "Sdcb.PictureSpeaks\Sdcb.PictureSpeaks.csproj", "{0F4ABBD2-D80D-490B-99C6-0CB38BA570EF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{22AD18D8-E4E3-42A9-B444-AF9AF51C1012}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
