@@ -1,4 +1,4 @@
-# Sdcb.PictureSpeaks
+# Sdcb.PictureSpeaks [![QQ](https://img.shields.io/badge/QQ_Group-495782587-52B6EF?style=social&logo=tencent-qq&logoColor=000&logoWidth=20)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=mma4msRKd372Z6dWpmBp4JZ9RL4Jrf8X&authKey=gccTx0h0RaH5b8B8jtuPJocU7MgFRUznqbV%2FLgsKdsK8RqZE%2BOhnETQ7nYVTp1W0&noverify=0&group_code=495782587)
 
 Sdcb.PictureSpeaks 是一个基于`.NET 8`构建的`ASP.NET MVC`项目，集成了`knockout.js`实现MVVM模式，`SignalR`用于实时流式聊天通信。同时，项目集成了`Azure OpenAI`的`ChatGPT-4`及`ChatGPT-3.5`技术，为用户提供聊天和AI辅助服务。此外，本项目采用`Entity Framework Core 8.0`进行数据管理，并使用`SQLite`作为数据库解决方案。
 
