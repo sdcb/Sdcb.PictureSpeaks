@@ -11,6 +11,19 @@ Sdcb.PictureSpeaks 是一个基于`.NET 8`构建的`ASP.NET MVC`项目，集成�
 - **MVVM前端设计**：使用knockout.js实现前端的MVVM设计模式，简化数据与UI间的互动（当然这是老技术）。
 - **数据持久化**：利用最新版的Entity Framework Core 8.0与SQLite实现稳定的数据存储和访问。
 
+## 运行前的配置
+
+在`appsettings.json`或`userSecrets.json`中，输入Azure OpenAI的api key即可：
+```json
+{
+  "AzureOpenAI": {
+    "Endpoint": "https://{{your-api-key}}.openai.azure.com",
+    "ApiKey": "change-into-your-api-key"
+  }
+}
+
+```
+
 ## 在线演示
 
 您可以通过以下链接访问在线演示网站：[Sdcb.PictureSpeaks在线演示](https://ps.starworks.cc:88)
