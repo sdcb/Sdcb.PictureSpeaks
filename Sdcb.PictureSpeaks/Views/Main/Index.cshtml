@@ -56,23 +56,19 @@
             lobbies = ko.observableArray( @(Json.Serialize(ViewData["Lobbies"])).map(x => ko.mapping.fromJS(x)) );
 
             changeName() {
-                this.userName(prompt("请输入新名字："));
+                this.userName(prompt("请输入新名字：") || randomName());
                 localStorage.setItem("userName", this.userName());
             }
 
             loadLobbies() {
                 $.get('/main/lobbies').then(data => {
-                    this.lobbies(ko.mapping.fromJS(data));
+                    this.lobbies(data.map(x => ko.mapping.fromJS(x)));
                 });
             }
 
             redirect(url) {
                 localStorage.setItem('userName', this.userName());
                 location.href = url;
-            }
-
-            constructor() {
-                this.userName.subscribe(n => localStorage.setItem("userName", n));
             }
         }
 
