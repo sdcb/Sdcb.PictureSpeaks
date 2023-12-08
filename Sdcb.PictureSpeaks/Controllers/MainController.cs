@@ -37,6 +37,11 @@ public class MainController(
     [HttpPost]
     public async Task<IActionResult> CreateLobby(string user, string idiom)
     {
+        if (user.Length > 10)
+        {
+            return BadRequest("错误，你的名字太长了！");
+        }
+
         WordIsIdiomResult res = await _idiomService.IsIdiomOnline(idiom);
         if (!res)
         {
@@ -51,6 +56,11 @@ public class MainController(
     [HttpPost]
     public async Task<IActionResult> CreateRandomLobby(string user)
     {
+        if (user.Length > 10)
+        {
+            return BadRequest("错误，你的名字太长了！");
+        }
+
         Idiom idiom = _idiomService.GetRandomIdiom();
         Lobby lobby = await _repo.AddLobby(user, idiom.Word);
         await _hubContext.Clients.All.RefreshLobby();
@@ -111,9 +121,23 @@ public class MainController(
         return View();
     }
 
+    public async Task<IActionResult> Lobbies()
+    {
+        return Json(await _repo.ToListPageViewModel());
+    }
+
     [HttpPost]
     public async Task<IActionResult> UserGuess(string user, int lobbyId, string guessText)
     {
+        if (user.Length > 10)
+        {
+            return BadRequest("错误，你的名字太长了！");
+        }
+        if (guessText.Length > 50)
+        {
+            return BadRequest("错误，你的猜测太长了！");
+        }
+
         LobbyMessage message = await _repo.AddUserGuess(lobbyId, user, guessText);
         await _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(message.ToViewModel());
         _ = CallAzureOpenAI(lobbyId, user, guessText);
