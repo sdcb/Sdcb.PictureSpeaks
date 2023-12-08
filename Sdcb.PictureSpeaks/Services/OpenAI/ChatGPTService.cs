@@ -26,7 +26,7 @@ public class ChatGPTService(OpenAIConfig config)
         for (int i = 0; i < retry; ++i)
         {
             Response<ChatCompletions> completion = await api.GetChatCompletionsAsync(new ChatCompletionsOptions(req.Model, req.AllMessages));
-            string content = completion.Value.Choices[0].Message.Content;
+            string content = completion.Value.Choices[0].Message.Content.Replace("```json", "").Replace("```", "");
             try
             {
                 return JsonSerializer.Deserialize<T>(content)!;

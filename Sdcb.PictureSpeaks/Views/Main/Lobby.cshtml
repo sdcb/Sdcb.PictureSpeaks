@@ -21,7 +21,7 @@
         .message-list {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 8px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
         }
@@ -51,11 +51,11 @@
         }
 
         .message-user {
-            margin-right: 8px;
+            margin-right: 1px;
         }
 
         .message-item > img {
-            width: 100%;
+            width: calc(100% - 8px - 24px);
             height: auto;
         }
 
@@ -82,7 +82,7 @@
         <a href="/">&lt;返回首页</a>
         @lobby.Id 由 @lobby.CreateUser 创建 |
         状态：<span data-bind="lobbyStatus: lobbyStatus"></span> |
-        当前用户名：<span data-bind="text: userName"></span> <button type="button" data-bind="changeName">修改</button>
+        当前用户名：<span data-bind="text: userName"></span> <button type="button" data-bind="click: changeName">修改</button>
     </div>
 
     <hr />
@@ -149,7 +149,8 @@
             userName = ko.observable(localStorage.getItem("userName") || randomName());
 
             changeName() {
-                this.userName(prompt("请输入新名字："));
+                this.userName(prompt("请输入新名字：") || this.userName());
+                localStorage.setItem("userName", this.userName());
             }
 
             guess() {
