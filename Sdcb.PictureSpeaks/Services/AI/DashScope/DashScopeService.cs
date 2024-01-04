@@ -35,6 +35,7 @@ public class DashScopeService : IAIService
     public async IAsyncEnumerable<string> AskStream(LLMRequest req)
     {
         (string model, IReadOnlyList<ChatMessage> messages, ChatParameters parameters) = req.ToDashScope();
+        parameters.IncrementalOutput = true;
         await foreach (var resp in _c.TextGeneration.ChatStreamed(model, messages, parameters))
         {
             yield return resp.Output.Text;
@@ -76,7 +77,7 @@ public class DashScopeService : IAIService
 		      "prompt": "...", 
 		      "negative_prompt": "..." 
 		    }
-		    为了帮你理解stable diffusion提示词，这里给你两个示例
+		    为了帮你理解stable diffusion提示词，这里给你一个示例
 		    这是一个正面提示词示例，它表示画面中应该存在的元素：standing, ultra detailed, official art, 4k 8k wallpaper, soft light and shadow, hand detail, eye high detail, 8K, (best quality:1.5), pastel color, soft focus, masterpiece, studio, hair high detail, (pure background:1.2), (head fully visible, full body shot)
 		    这是一个负面提示词示例，它表示页面中应该避免存在的元素：EasyNegative, nsfw,(low quality, worst quality:1.4),lamp, missing shoe, missing head,mutated hands and fingers,deformed,bad anatomy,extra limb,ugly,poorly drawn hands,disconnected limbs,missing limb,missing head,camera
 		    """),
@@ -91,7 +92,7 @@ public class DashScopeService : IAIService
         Console.WriteLine($"{idiom}[{sw.ElapsedMilliseconds}]: {prompt}");
         DashScopeTask task = await _c.WanXiang.Text2Image(prompt, new Text2ImageParams 
         { 
-            N = 4, 
+            N = 2, 
             Size = "1280*720" 
         }, model: "wanx-v1");
 

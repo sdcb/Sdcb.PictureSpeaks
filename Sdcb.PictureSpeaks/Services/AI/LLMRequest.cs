@@ -31,7 +31,6 @@ public record LLMRequest(string? SystemPrompt = null, params ChatMessage[] Messa
         IReadOnlyList<ChatMessage> messages = DashScopeChatMessageFilter(AllMessages);
         ChatParameters parameters = new()
         {
-            IncrementalOutput = true,
             Seed = (ulong)Random.Shared.Next(),
         };
         return (model, messages, parameters);
