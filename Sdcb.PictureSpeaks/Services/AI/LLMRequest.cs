@@ -27,7 +27,7 @@ public record LLMRequest(string? SystemPrompt = null, params ChatMessage[] Messa
 
     public (string model, IReadOnlyList<ChatMessage> messages, ChatParameters parameters) ToDashScope()
     {
-        string model = IsStrongModel ? "qwen-max" : "qwen-turbo";
+        string model = IsStrongModel ? "qwen-max" : "qwen-max"; // qwen-turbo不行
         IReadOnlyList<ChatMessage> messages = DashScopeChatMessageFilter(AllMessages);
         ChatParameters parameters = new()
         {
@@ -73,6 +73,24 @@ public record LLMRequest(string? SystemPrompt = null, params ChatMessage[] Messa
 
         // Reverse the list to maintain the original order
         filteredMessages.Reverse();
+
+        // Ensure first message is user message
+        var toRemove = new List<ChatMessage>();
+        for (int i = 0; i < filteredMessages.Count; i++)
+        {
+            if (filteredMessages[i].Role != "system" && filteredMessages[i].Role != "user")
+            {
+                toRemove.Add(filteredMessages[i]);
+            }
+            else if (filteredMessages[i].Role == "user")
+            {
+                break;
+            }
+        }
+        foreach (var item in toRemove)
+        {
+            filteredMessages.Remove(item);
+        }
 
         return filteredMessages;
     }

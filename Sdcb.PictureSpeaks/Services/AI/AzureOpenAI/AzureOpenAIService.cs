@@ -68,4 +68,14 @@ public static class ChatGPTServiceExtensions
             yield return full.ToString();
         }
     }
+
+    public static async Task<string> GetFinal(this IAsyncEnumerable<string> deltas)
+    {
+        StringBuilder full = new();
+        await foreach (string delta in deltas)
+        {
+            full.Append(delta);
+        }
+        return full.ToString();
+    }
 }

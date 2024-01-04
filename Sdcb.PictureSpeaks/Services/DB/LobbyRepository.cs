@@ -99,6 +99,27 @@ public class LobbyRepository(Storage db, IServiceScopeFactory scope)
         return msg;
     }
 
+    public async Task<LobbyMessage> AddSystemMessage(int lobbyId, string message)
+    {
+        Lobby? lobby = await _db.Lobby.FindAsync(lobbyId) ?? throw new Exception("找不到房间");
+        LobbyMessage msg = new()
+        {
+            Message = message,
+            User = "系统",
+            MessageKind = MessageKind.Text,
+        };
+        lobby.Messages.Add(msg);
+        await _db.SaveChangesAsync();
+        return msg;
+    }
+
+    public async Task<bool> RecentlyHasImageRequest(int lobbyId)
+    {
+        bool recentlyHasRequest = await _db.LobbyMessage
+            .AnyAsync(x => x.LobbyId == lobbyId && x.User == "系统" && x.Message.StartsWith("🖼🖼") && x.DateTime > DateTime.Now.AddMinutes(-1));
+        return recentlyHasRequest;
+    }
+
     public async Task<LobbyMessage> AddUserGuess(int lobbyId, string user, string guessText)
     {
         Lobby? lobby = await _db.Lobby.FindAsync(lobbyId) ?? throw new Exception("找不到房间");

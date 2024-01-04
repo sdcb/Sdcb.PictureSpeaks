@@ -82,7 +82,7 @@ public class DashScopeService : IAIService
 		    这是一个负面提示词示例，它表示页面中应该避免存在的元素：EasyNegative, nsfw,(low quality, worst quality:1.4),lamp, missing shoe, missing head,mutated hands and fingers,deformed,bad anatomy,extra limb,ugly,poorly drawn hands,disconnected limbs,missing limb,missing head,camera
 		    """),
         ];
-        JsonDocument json = JsonDocument.Parse(await Chat(messages));
+        JsonDocument json = await AskJson<JsonDocument>(new LLMRequest(null, [.. messages]));
 
         Text2ImagePrompt prompt = new()
         {

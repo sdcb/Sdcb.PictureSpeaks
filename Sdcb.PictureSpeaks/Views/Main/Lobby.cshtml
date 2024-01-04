@@ -89,7 +89,7 @@
     <!-- ko if: messages().length > 0 -->
     <div class="message-list" data-bind="foreach: messages">
         <div class="message-item">
-            <label class="message-user" data-bind="text: user() + ' : '"></label>
+            <label class="message-user" data-bind="text: user() + ': '"></label>
             <!-- ko if: messageKind() === 0 -->
             <!-- ko if: user() === 'AI' -->
             <span data-bind="text: message" style="color: blue"></span>
@@ -108,8 +108,8 @@
     </div>
     <!-- /ko -->
     <div data-bind="if: messages().length === 0">
-        <img src="/assets/loading.webp" alt="图片生成中，大约需要20秒，请稍候..." style="width: 100%"/>
-        图片生成中，大约需要20秒，请稍候...
+        图片生成中，大约需要60秒，请稍候...
+        <img src="/assets/loading.webp" alt="图片生成中，大约需要60秒，请稍候..." style="width: 100%"/>
     </div>
 
     <!-- ko if: lobbyStatus() === 1 -->
