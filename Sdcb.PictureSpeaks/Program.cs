@@ -1,20 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using Sdcb.PictureSpeaks.Hubs;
-using Sdcb.PictureSpeaks.Services.OpenAI;
 using Sdcb.PictureSpeaks.Services.DB;
 using Sdcb.PictureSpeaks.Services.Idioms;
+using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
+using Sdcb.PictureSpeaks.Services.AI;
+using Sdcb.PictureSpeaks.Services.AI.DashScope;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<DallE3Client>();
 builder.Services.AddSignalR();
 builder.Services.AddDbContext<Storage>(options => options.UseSqlite("Data Source=storage.db"));
 builder.Services.AddTransient<LobbyRepository>();
 builder.Services.AddSingleton<IdiomService>();
-builder.Services.AddSingleton<OpenAIConfig>();
-builder.Services.AddSingleton<ChatGPTService>();
+builder.Services.AddSingleton<AzureOpenAIConfig>();
+BindAIService(builder);
 
 builder.Services.AddMvc().AddRazorRuntimeCompilation();
 
@@ -44,3 +45,19 @@ using (IServiceScope scope = scopeFactory.CreateScope())
 }
 
 app.Run();
+
+static void BindAIService(WebApplicationBuilder builder)
+{
+    if (builder.Configuration["AIType"] == "AzureOpenAI")
+    {
+        builder.Services.AddSingleton<IAIService, AzureOpenAIService>();
+    }
+    else if (builder.Configuration["AIType"] == "DashScope")
+    {
+        builder.Services.AddSingleton<IAIService, DashScopeService>();
+    }
+    else
+    {
+        throw new Exception($"Unknown AIType: {builder.Configuration["AIType"]}");
+    }
+}

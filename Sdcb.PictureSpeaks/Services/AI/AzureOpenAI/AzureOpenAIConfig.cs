@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Sdcb.PictureSpeaks.Services.OpenAI;
+namespace Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 
-public record OpenAIConfig
+public record AzureOpenAIConfig
 {
-    public OpenAIConfig(IConfiguration config)
+    public AzureOpenAIConfig(IConfiguration config)
     {
         IConfigurationSection section = config.GetRequiredSection("AzureOpenAI");
         Endpoint = section[nameof(Endpoint)] ?? throw new Exception("AzureOpenAI:Endpoint is not set.");

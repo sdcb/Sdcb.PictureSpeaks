@@ -1,4 +1,4 @@
-﻿using Sdcb.PictureSpeaks.Services.OpenAI;
+﻿using Sdcb.PictureSpeaks.Services.AI;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -9,9 +9,9 @@ public class IdiomService
     private Dictionary<string, Idiom> _idioms = null!;
     private string[] _idiomKeys = null!;
     private string[] _idiomCommonKeys = null!;
-    private readonly ChatGPTService _llm;
+    private readonly IAIService _llm;
 
-    public IdiomService(ChatGPTService llm)
+    public IdiomService(IAIService llm)
     {
         EnsureLoaded();
         _llm = llm;
@@ -55,13 +55,13 @@ public class IdiomService
         }
         else
         {
-            return await _llm.AskJson<WordIsIdiomResult>(new GptRequest($$"""
+            return await _llm.AskJson<WordIsIdiomResult>(new LLMRequest($$"""
                 请问“{{word}}”是成语吗?它是什么意思? 请用JSON回答，无需markdown格式或其它解释，格式：
                 {
                     "IsIdiom": true|false,
                     "Explanation": "这是一个成语的解释"
                 }
-                """) { Model = "gpt-35-turbo" });
+                """) { IsStrongModel = false });
         }
     }
 }
@@ -75,7 +75,4 @@ public record struct WordIsIdiomResult(bool IsIdiom, string? Explanation = null)
 
 public record struct WordExplain(string Word, string? Explanation = null)
 {
-    public readonly string ToPrompt() => Explanation is null ?
-        $"请为成语“{Word}”生成一张符合意境的图片" :
-        $"请为成语“{Word}”生成一张符合意境的图片，它的释义为：{Explanation}";
 }

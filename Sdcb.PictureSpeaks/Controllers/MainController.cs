@@ -4,28 +4,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Sdcb.PictureSpeaks.Hubs;
-using Sdcb.PictureSpeaks.Services.OpenAI;
 using Sdcb.PictureSpeaks.Services.DB;
-using ImageGenerationOptions = Sdcb.PictureSpeaks.Services.OpenAI.ImageGenerationOptions;
+using ImageGenerationOptions = Sdcb.PictureSpeaks.Services.AI.AzureOpenAI.ImageGenerationOptions;
 using System.Text;
 using Sdcb.PictureSpeaks.Services.Idioms;
+using Sdcb.DashScope.TextGeneration;
+using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
+using Sdcb.PictureSpeaks.Services.AI;
 
 namespace Sdcb.PictureSpeaks.Controllers;
 
 public class MainController(
-    DallE3Client dalle3,
     LobbyRepository repo,
     Storage db,
     IHubContext<MainHub, IMainHubClient> hubContext,
     IServiceScopeFactory scopeFactory,
     IWebHostEnvironment webHost, 
-    IdiomService idiomService) : Controller
+    IdiomService idiomService,
+    IAIService ai) : Controller
 {
-    private readonly DallE3Client _dalle3 = dalle3;
     private readonly LobbyRepository _repo = repo;
     private readonly Storage _db = db;
     private readonly IHubContext<MainHub, IMainHubClient> _hubContext = hubContext;
     private readonly IdiomService _idiomService = idiomService;
+    private readonly IAIService _ai = ai;
 
     [Route("")]
     public async Task<IActionResult> Index()
@@ -75,12 +77,13 @@ public class MainController(
 
         try
         {
-            ImageGeneratedResponse resp = await _dalle3.GenerateDallE3Image(new ImageGenerationOptions(idiom.ToPrompt())
+            ImageGeneratedResponse resp = await _ai.GenerateImage(idiom.Word);
+            foreach (Datum data in resp.Data)
             {
-                Size = "1792x1024",
-            });
-            LobbyMessage message = await repo.AddImageMessage(lobby.Id, resp.Data[0]);
-            await _hubContext.Clients.Group($"lobby-{lobby.Id}").OnNewMessage(message.ToViewModel());
+                LobbyMessage message = await repo.AddImageMessage(lobby.Id, data);
+                await _hubContext.Clients.Group($"lobby-{lobby.Id}").OnNewMessage(message.ToViewModel());
+            }
+            
             await _hubContext.Clients.All.OnLobbyStatusChanged(lobby.Id, LobbyStatus.Ready);
         }
         catch (Exception e)
@@ -151,7 +154,6 @@ public class MainController(
         using Storage db = scope.ServiceProvider.GetRequiredService<Storage>();
         LobbyRepository repo = scope.ServiceProvider.GetRequiredService<LobbyRepository>();
         string? prompt = config["Prompt"] ?? throw new Exception("Config Prompt is not set.");
-        ChatGPTService llm = scope.ServiceProvider.GetRequiredService<ChatGPTService>();
 
         Lobby lobby = await db.Lobby
             .Include(x => x.Messages)
@@ -170,12 +172,12 @@ public class MainController(
             .OrderBy(x => x.Id)
             .Where(x => x.MessageKind == MessageKind.Text)
             .Select(x => x.User == "AI"
-                ? new ChatMessage(ChatRole.Assistant, x.Message)
-                : new ChatMessage(ChatRole.User, $"{x.User}: {x.Message}"))
+                ? ChatMessage.FromAssistant(x.Message)
+                : ChatMessage.FromUser($"{x.User}: {x.Message}"))
             .ToArray();
 
         bool haveAction = false;
-        await foreach (string full in llm.AskStream(new GptRequest(systemPrompt, historyPrompt)).DeltaToFull())
+        await foreach (string full in _ai.AskStream(new LLMRequest(systemPrompt, historyPrompt)).DeltaToFull())
         {
             _ = _hubContext.Clients.Group($"lobby-{lobbyId}").OnMessageStreaming(msg.Id, full);
             msg.Message = full;
@@ -187,7 +189,7 @@ public class MainController(
                 await _hubContext.Clients.All.OnLobbyStatusChanged(lobbyId, lobby.RealStatus);
                 haveAction = true;
             }
-            else if (msg.Message.StartsWith("🖼🖼"))
+            else if (msg.Message.Contains("🖼🖼🖼"))
             {
                 _ = GenerateImage(user, lobby, new WordExplain(lobby.Idiom), markError: false);
                 haveAction = true;

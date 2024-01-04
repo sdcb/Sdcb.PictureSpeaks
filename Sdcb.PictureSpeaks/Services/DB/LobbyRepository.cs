@@ -1,6 +1,6 @@
 ﻿using Azure.Core.Pipeline;
 using Microsoft.EntityFrameworkCore;
-using Sdcb.PictureSpeaks.Services.OpenAI;
+using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 
 namespace Sdcb.PictureSpeaks.Services.DB;
 

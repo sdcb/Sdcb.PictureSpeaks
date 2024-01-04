@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Sdcb.PictureSpeaks.Services.OpenAI;
+namespace Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 
 public class ImageGeneratedResponse
 {

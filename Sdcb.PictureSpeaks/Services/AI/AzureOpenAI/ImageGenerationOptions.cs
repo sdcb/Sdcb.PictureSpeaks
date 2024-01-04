@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Sdcb.PictureSpeaks.Services.OpenAI;
+namespace Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 
 public record ImageGenerationOptions
 {
