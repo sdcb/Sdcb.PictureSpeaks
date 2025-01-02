@@ -1,32 +1,41 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
+using OpenAI.Chat;
+using System.ClientModel;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Schema;
 
 namespace Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 
 public class AzureOpenAIService(AzureOpenAIConfig config) : IAIService
 {
-    private readonly OpenAIClient _c = new(new Uri(config.Endpoint), new AzureKeyCredential(config.ApiKey));
+    private readonly ChatClient _c = new AzureOpenAIClient(new Uri(config.Endpoint), new AzureKeyCredential(config.ApiKey)).GetChatClient(config.Model);
 
-    public async IAsyncEnumerable<string> AskStream(LLMRequest req)
+    public async IAsyncEnumerable<string> AskStream(ChatMessage[] chatMessages)
     {
-        await foreach (StreamingChatCompletionsUpdate delta in await _c.GetChatCompletionsStreamingAsync(req.ToAzureOpenAI()))
+        await foreach (StreamingChatCompletionUpdate delta in _c.CompleteChatStreamingAsync(chatMessages))
         {
-            if (delta.FinishReason == CompletionsFinishReason.Stopped) continue;
-            yield return delta.ContentUpdate;
+            if (delta.FinishReason == ChatFinishReason.Stop) continue;
+            if (delta.ContentUpdate.Count > 0)
+            {
+                yield return delta.ContentUpdate[0].Text;
+            }
         }
     }
 
-    public async Task<T> AskJson<T>(LLMRequest req, int retry = 3)
+    public async Task<T> AskJson<T>(ChatMessage[] chatMessages, int retry = 3)
     {
-        ChatCompletionsOptions llmReq = req.ToAzureOpenAI();
-        llmReq.ResponseFormat = ChatCompletionsResponseFormat.JsonObject;
-
         return await IAIService.RetryJson<T>(retry, async () =>
         {
-            Response<ChatCompletions> completion = await _c.GetChatCompletionsAsync(llmReq);
-            string content = completion.Value.Choices[0].Message.Content;
+            ClientResult<ChatCompletion> completion = await _c.CompleteChatAsync(chatMessages, new ChatCompletionOptions()
+            {
+                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(typeof(T).Name, BinaryData.FromBytes(JsonSerializer.SerializeToUtf8Bytes(JsonSchemaExporter.GetJsonSchemaAsNode(JsonSerializerOptions.Default, typeof(T), new JsonSchemaExporterOptions()
+                {
+                    TreatNullObliviousAsNonNullable = true
+                }))))
+            });
+            string content = completion.Value.Content[0].Text;
             return content;
         });
     }

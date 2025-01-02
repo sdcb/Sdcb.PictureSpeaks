@@ -1,12 +1,13 @@
-﻿using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
+﻿using OpenAI.Chat;
+using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 using System.Text.Json;
 
 namespace Sdcb.PictureSpeaks.Services.AI
 {
     public interface IAIService
     {
-        Task<T> AskJson<T>(LLMRequest req, int retry = 3);
-        IAsyncEnumerable<string> AskStream(LLMRequest req);
+        Task<T> AskJson<T>(ChatMessage[] req, int retry = 3);
+        IAsyncEnumerable<string> AskStream(ChatMessage[] req);
         Task<ImageGeneratedResponse> GenerateImage(string idiom);
 
         public static async Task<T> RetryJson<T>(int retry, Func<Task<string>> action)

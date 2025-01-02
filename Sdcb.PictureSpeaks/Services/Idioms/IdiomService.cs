@@ -1,4 +1,4 @@
-﻿using Sdcb.DashScope.TextGeneration;
+﻿using OpenAI.Chat;
 using Sdcb.PictureSpeaks.Services.AI;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -56,13 +56,15 @@ public class IdiomService
         }
         else
         {
-            return await _llm.AskJson<WordIsIdiomResult>(new LLMRequest(null, ChatMessage.FromUser($$"""
-                请问“{{word}}”是成语吗?它是什么意思? 请用JSON回答，无需markdown格式或其它解释，格式：
-                {
-                    "IsIdiom": true|false,
-                    "Explanation": "这是一个成语的解释"
-                }
-                """)) { IsStrongModel = false });
+            return await _llm.AskJson<WordIsIdiomResult>(
+                [ChatMessage.CreateUserMessage($$"""
+                    请问“{{word}}”是成语吗?它是什么意思? 请用JSON回答，无需markdown格式或其它解释，格式：
+                    {
+                        "IsIdiom": true|false,
+                        "Explanation": "这是一个成语的解释"
+                    }
+                    """)
+                ]);
         }
     }
 }

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Sdcb.PictureSpeaks.Hubs;
 using Sdcb.PictureSpeaks.Services.DB;
 using Sdcb.PictureSpeaks.Services.Idioms;
-using Sdcb.DashScope.TextGeneration;
 using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 using Sdcb.PictureSpeaks.Services.AI;
+using OpenAI.Chat;
 
 namespace Sdcb.PictureSpeaks.Controllers;
 
@@ -137,6 +137,8 @@ public class MainController(
             return BadRequest("错误，你的猜测太长了！");
         }
 
+        LobbyMessage message = await _repo.AddUserGuess(lobbyId, user, guessText);
+        await _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(message.ToViewModel());
         _ = CallLLM(lobbyId, user, guessText);
         return Ok();
     }
@@ -147,86 +149,67 @@ public class MainController(
         IConfiguration config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         using Storage db = scope.ServiceProvider.GetRequiredService<Storage>();
         LobbyRepository repo = scope.ServiceProvider.GetRequiredService<LobbyRepository>();
+        string prompt = @"你是猜成语App的用户助理，此次成语是：{{idiom}}({{charsCount}}个字)，该成语的解释是：{{explain}}
+用于生成图片的revised prompt是：{{revisedPrompt}}
+系统已根据该成语生成了一张图片发给用户，用户会猜成语是啥
+
+你需要和用户对话，并适时的给予一些加油鼓励，但不要做任何提示
+图片可能看不太出来，你可以调侃一下图片生成还不够先进
+但如果用户明确需要，你可以根据用户需要，给少量提示，但不要太直白
+禁止直接将这个成语直接告诉用户
+如果用户请求，你可返回以🖼🖼🖼开头的消息，让系统监测并生成新图片发给用户，生成图片大约需要60秒
+
+请用诙谐、精简的语言对话，如果猜对了，你需要夸奖用户
+请不要回复任何不相关的话题
+重要：如果用户答对了，回复时请以✅开头，它会用于系统检测猜成语游戏是否已经完成";
+        IAIService llm = scope.ServiceProvider.GetRequiredService<IAIService>();
 
         Lobby lobby = await db.Lobby
             .Include(x => x.Messages)
             .SingleAsync(x => x.Id == lobbyId);
 
-        LobbyMessage userPromptMessage = await repo.AddUserGuess(lobbyId, user, guessText);
-        await _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(userPromptMessage.ToViewModel());
+        LobbyMessage msg = await repo.AddEmptyAIChatMessage(lobbyId);
+        await _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(msg.ToViewModel());
 
-        string choice = await _ai.AskStream(new LLMRequest($"你是猜成语App的用户助理，此次成语是：{lobby.Idiom}，请仔细根据提示进行回复🖼或者💬，不需要任何解释", ChatMessage.FromUser($"""
-            请根据指示回复：
-            * 常规聊天信息，请回复💬
-            * 如果用户明确提出来生成新图片（请注意生成图片很贵，请不要随意批准），请回复🖼
-            以下为用户输入内容：
-            {guessText}
-            """))
-        {
-            IsStrongModel = false,
-        }).GetFinal();
+        string systemPrompt = prompt
+                .Replace("{{idiom}}", lobby.Idiom)
+                .Replace("{{charsCount}}", lobby.Idiom.Length.ToString())
+                .Replace("{{revisedPrompt}}", lobby.Dalle3Requests.FirstOrDefault()?.RevisedPrompt);
+        ChatMessage[] historyPrompt = lobby.Messages
+            .OrderByDescending(x => x.Id)
+            .Take(20)
+            .OrderBy(x => x.Id)
+            .Where(x => x.MessageKind == MessageKind.Text)
+            .Select(x => x.User == "AI"
+                ? (ChatMessage)ChatMessage.CreateAssistantMessage(x.Message)
+                : ChatMessage.CreateUserMessage($"{x.User}: {x.Message}"))
+            .ToArray();
 
-        if (choice.Contains("🖼"))
+        bool haveAction = false;
+        await foreach (string full in llm.AskStream(
+        [
+            ChatMessage.CreateSystemMessage(systemPrompt), 
+            ..historyPrompt
+        ]).DeltaToFull())
         {
-            if (await repo.RecentlyHasImageRequest(lobbyId))
+            _ = _hubContext.Clients.Group($"lobby-{lobbyId}").OnMessageStreaming(msg.Id, full);
+            msg.Message = full;
+
+            if (haveAction) continue;
+            if (msg.Message.StartsWith('✅') || guessText.Contains(lobby.Idiom))
             {
-                LobbyMessage msg = await repo.AddErrorMessage(lobbyId, $"{user}, ⚠请不要频繁请求新图片。", markError: false);
-                _ = _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(msg.ToViewModel());
-                return;
+                lobby.LobbyStatus = LobbyStatus.Completed;
+                await _hubContext.Clients.All.OnLobbyStatusChanged(lobbyId, lobby.RealStatus);
+                haveAction = true;
             }
-            else
+            else if (msg.Message.StartsWith("🖼🖼"))
             {
-                LobbyMessage msg = await repo.AddSystemMessage(lobbyId, $"🖼🖼收到新图片申请，稍等约60秒，图片马上到");
-                _ = _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(msg.ToViewModel());
                 _ = GenerateImage(user, lobby, new WordExplain(lobby.Idiom), markError: false);
+                haveAction = true;
             }
         }
-        else
-        {
-            LobbyMessage msg = await repo.AddEmptyAIChatMessage(lobbyId);
-            await _hubContext.Clients.Group($"lobby-{lobbyId}").OnNewMessage(msg.ToViewModel());
 
-            string systemPrompt = $"""
-                你是猜成语App的用户助理，此次成语是（千万别把这个成语说出来）：{lobby.Idiom}({lobby.Idiom.Length}个字)
-                用于生成图片的prompt是：{lobby.Dalle3Requests.FirstOrDefault()?.RevisedPrompt}
-                系统已根据该成语生成了图片发给用户，用户会猜成语是啥
-            
-                你需要和用户对话，并适时的给予一些加油鼓励，但不要做任何提示
-                图片可能看不太出来，你可以调侃一下图片生成还不够先进
-                如果用户明确需要，你可以给予少量提示，但提示时不要将这个成语说出来
-            
-                请用诙谐、精简的语言对话，如果猜对了，你需要夸奖用户
-                请不要回复任何不相关的话题
-                重要：如果用户答对了，回复时请以✅开头，系统检测猜成语游戏是否已经完成
-                """;
-
-            ChatMessage[] historyPrompt = lobby.Messages
-                .OrderByDescending(x => x.Id)
-                .Take(20)
-                .OrderBy(x => x.Id)
-                .Where(x => x.MessageKind == MessageKind.Text && x.User != "系统")
-                .Select(x => x.User == "AI"
-                    ? ChatMessage.FromAssistant(x.Message)
-                    : ChatMessage.FromUser($"{x.User}: {x.Message}"))
-                .ToArray();
-
-            bool haveAction = false;
-            await foreach (string full in _ai.AskStream(new LLMRequest(systemPrompt, historyPrompt)).DeltaToFull())
-            {
-                _ = _hubContext.Clients.Group($"lobby-{lobbyId}").OnMessageStreaming(msg.Id, full);
-                msg.Message = full;
-
-                if (haveAction) continue;
-                if (msg.Message.StartsWith('✅') || guessText.Contains(lobby.Idiom))
-                {
-                    lobby.LobbyStatus = LobbyStatus.Completed;
-                    await _hubContext.Clients.All.OnLobbyStatusChanged(lobbyId, lobby.RealStatus);
-                    haveAction = true;
-                }
-            }
-
-            await db.SaveChangesAsync();
-        }
+        await db.SaveChangesAsync();
     }
 
     [HttpPost]

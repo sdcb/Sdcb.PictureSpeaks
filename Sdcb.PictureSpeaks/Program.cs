@@ -4,7 +4,6 @@ using Sdcb.PictureSpeaks.Services.DB;
 using Sdcb.PictureSpeaks.Services.Idioms;
 using Sdcb.PictureSpeaks.Services.AI.AzureOpenAI;
 using Sdcb.PictureSpeaks.Services.AI;
-using Sdcb.PictureSpeaks.Services.AI.DashScope;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,10 +50,6 @@ static void BindAIService(WebApplicationBuilder builder)
     if (builder.Configuration["AIType"] == "AzureOpenAI")
     {
         builder.Services.AddSingleton<IAIService, AzureOpenAIService>();
-    }
-    else if (builder.Configuration["AIType"] == "DashScope")
-    {
-        builder.Services.AddSingleton<IAIService, DashScopeService>();
     }
     else
     {
